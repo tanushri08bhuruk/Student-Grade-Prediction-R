@@ -1,0 +1,415 @@
+---
+title: "Grade Prediction System"
+output: html_notebook
+---
+Dataset : Student Grade Prediction available on Kaggle 
+
+Attributes :
+* `school` - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
+* `sex` - student's sex (binary: 'F' - female or 'M' - male)
+* `age` - student's age (numeric: from 15 to 22)
+* `address` - student's home address type (binary: 'U' - urban or 'R' - rural)
+* `famsize` - family size (binary: 'LE3' - less or equal to 3 or 'GT3' - greater than 3)
+* `Pstatus` - parent's cohabitation status (binary: 'T' - living together or 'A' - apart)
+* `Medu` - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 - 5th to 9th grade, 3 - secondary education or 4 - higher education)
+* `Fedu` - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 - 5th to 9th grade, 3 - secondary education or 4 - higher education)
+* `Mjob` - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+* `Fjob` - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+* `reason` - reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other')
+* `guardian` - student's guardian (nominal: 'mother', 'father' or 'other')
+* `traveltime` - home to school travel time (numeric: 1: < 15 minutes, 2: 15-30 minutes, 3: 30 minutes - 1 hour, 4: > 1 hour)
+* `studytime` - weekly study time (numeric: 1: < 2 hours, 2: 2-5 hours, 3: 5-10 hours, 4: > 10 hours)
+* `failures` - number of past class failures (numeric: n if 1<=n<3, else 4)
+* `schoolsup` - extra educational support (binary: yes or no)
+* `famsup` - family educational support (binary: yes or no)
+* `paid` - extra paid classes within the course subject (Math or Portuguese) (binary: yes or no)
+* `activities` - extra-curricular activities (binary: yes or no)
+* `nursery` - attended nursery school (binary: yes or no)
+* `higher` - wants to take higher education (binary: yes or no)
+* `internet` - Internet access at home (binary: yes or no)
+* `romantic` - with a romantic relationship (binary: yes or no)
+* `famrel` - quality of family relationships (numeric: from 1 - very bad to 5 - excellent)
+* `freetime` - free time after school (numeric: from 1 - very low to 5 - very high)
+* `goout` - going out with friends (numeric: from 1 - very low to 5 - very high)
+* `Dalc` - workday alcohol consumption (numeric: from 1 - very low to 5 - very high)
+* `Walc` - weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)
+* `health` - current health status (numeric: from 1 - very bad to 5 - very good)
+* `absences` - number of school absences (numeric: from 0 to 93)
+* `G1` - first period grade (numeric: from 0 to 20)
+* `G2` - second period grade (numeric: from 0 to 20)
+* `G3` - final grade (numeric: from 0 to 20, output target)
+
+PROBLEM STATEMENT - By using Machine Learning Algorithms , we want to know the relationship among variables, especially between the Final Score variable or G3 in this dataset with other variables. we also want to predict the score based on the historical data. The dataset we will use for making prediction is from kaggle that contains 33 attributes for 395 entries. 
+
+Data importing and cleaning methods
+```{r}
+f<-read.csv("student-mat.csv")
+f$school=as.factor(f$school)
+f$sex=as.factor(f$sex)
+f$address=as.factor(f$address)
+f$famsize=as.factor(f$famsize)
+f$Pstatus=as.factor(f$Pstatus)
+f$Mjob=as.factor(f$Mjob)
+f$Fjob=as.factor(f$Fjob)
+f$reason=as.factor(f$reason)
+f$guardian=as.factor(f$guardian)
+f$schoolsup=as.factor(f$schoolsup)
+f$famsup=as.factor(f$famsup)
+f$paid=as.factor(f$paid)
+f$activities=as.factor(f$activities)
+f$nursery=as.factor(f$nursery)
+f$higher=as.factor(f$higher)
+f$internet=as.factor(f$internet)
+f$romantic=as.factor(f$romantic)
+```
+Data Description
+```{r}
+glimpse(f)
+```
+Data Description
+```{r}
+head(f)
+```
+DATA CLEANING  - Data Set does not contain any null Values
+```{r}
+colSums(is.na(f))
+```
+Data Visualization
+- BAR CHART
+```{r}
+library(ggplot2)
+a<-ggplot(f, aes(x =G3)) + geom_bar(fill="Blue") + labs(x="Final score G3",y="Quantity")
+print(a)
+
+```
+
+As there are some final score values with 0 score due to some reasons,to avoid decrease in accuracy we filtered them
+the graph change after that 
+```{r}
+library(dplyr)
+f<-filter(f,G3!=0)
+a<-ggplot(f, aes(x =G3)) + geom_bar(fill="Blue") + labs(x="Final score G3",y="Quantity")
+print(a)
+```
+
+Now there are some graphs to compare important aspects for grade of person
+
+First is the support of school for their studies relation to their g3
+```{r}
+d<-ggplot(f,aes(x=G3))+geom_density(aes(fill=schoolsup),alpha=.9)+  labs(y="Frequency",x="Final Score (G3)")
+print(d)
+```
+Next is the support of family for their studies relation to their g3
+```{r}
+e<-ggplot(f,aes(x=G3))+geom_density(aes(fill=famsup),alpha=.9)+labs(y="Frequency",x="Final Score (G3)")
+print(e)
+```
+
+From the histogram below, we can clearly see that most of the students are aged between 15 and 18, which makes sense since most students start high school at the age of 15 and graduate by 18 given the fact that generally, high schools around the world only last 3 years. However there are 29 students older than 18 years old. It would be intresting to see the gender of these students.
+
+```{r}
+age= ggplot(aes(x=age), data=f)+
+  geom_histogram(binwidth = 0.50, fill='darkred', color='black')+
+  ggtitle("Age of students")
+age
+```
+- Do Girls Perform Better in School?
+We will explore gender differences in the classroom with respect to G1 ( first period grade).
+
+We will:
+
+1) check the number of female and male students in the school.
+
+2) Examine the performance in class based on gender and age by replying to the following questions:
+
+a) Who does better at school? Do girls perform better or do boys gets better results than girls?
+
+b) Does students performance gets better with age?
+```{r}
+#1 - More Female students than Male 
+table(f$sex)
+gender= ggplot(data=f,aes(x=sex,fill=sex))+geom_bar()
+gender
+```
+
+```{r}
+#2 We can see that the majority of the students are in good health
+table(f$health)
+health= ggplot(data=f,aes(x=health,fill=sex))+geom_histogram(binwidth=0.5, fill='salmon')
+health
+
+```
+
+```{r}
+#as clearly seen aboce most of the students live in urban areas
+area= ggplot(f, aes(x=address)) +
+    geom_bar(fill='orchid')
+area
+
+```
+
+```{r}
+#We can see that girls performance gets better with age, however, a decrease in the boys performance could be detected in the graph above.
+G1=ggplot(data=f,aes(x=age, y=G1, col=sex, shape=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex)
+G1
+```
+```{r}
+#a) absences - From the graph above, we can see how absence affect negatively the performance of the boys, however missing classes doesn't have any negative impact on girls achievement in class.
+absences= ggplot(data=f,aes(x=absences, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex)
+absences
+```
+```{r}
+#b) Traveltime - As shown above, the negative impact of the traveltime could be largely seen in the boys performance, the further the male student resides, the less results he gets.
+table(f$traveltime)
+travel=ggplot(data=f,aes(x=traveltime, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex)
+travel
+```
+We examined traveltime and absences and from the results we got, we can classify them as major factors affecting the male students grades. Yet, other than traveltime what are other factors that effects on students performance?
+
+It is a known fact that parenting behavior and educational support for their children could cultivate children's learning habits and affect academic performance. Hence:
+
+        a) Does the education level of a parent and job affect a child's achievement in school?
+
+        b) How does family size contribute to students' academic performance?
+
+        c) Do kids of divorced parents score lower in the exams?
+
+        d) How do family relations affect the students academic performance?
+
+        e) How does workday alcohol consumption affect the students achievement?
+```{r}
+#a)
+Motherjob= ggplot(f, aes(x=Mjob)) +
+    geom_bar(fill='brown')
+Motherjob
+
+# father's job
+Fotherjob= ggplot(f, aes(x=Fjob)) +
+    geom_bar(fill='blue')
+Fotherjob
+```
+```{r}
+#From the graphs below, we can't see a clear difference in the students performance according to the parents job.
+ggplot(data=f,aes(x=Fjob, y=G3))+geom_point()+geom_smooth(method="lm",se=F)
+ggplot(data=f,aes(x=Mjob, y=G3))+geom_point()+geom_smooth(method="lm",se=F)
+```
+#As expecting, the highest the level of parents education is , the highest their kids score at school. students whose parents have higher levels of education may have an enhanced regard for learning, more positive ability beliefs, a stronger work orientation, and they may use more effective learning strategies than children of parents with lower levels of education.
+```{r}
+# Father's and Mother's Education
+Fedu= ggplot(f, aes(x=Fedu)) +
+    geom_bar(fill='grey', color="purple")
+Fedu
+
+Medu= ggplot(f, aes(x=Medu)) +
+    geom_bar(fill='black', color='black')
+Medu
+
+my_graph <- ggplot(f, aes(x = Fedu, y = Medu)) +
+    geom_point(aes(color = G1)) +
+    stat_smooth(method = "lm",
+        col = "#C42126",
+        se = FALSE,
+        size = 1)
+my_graph
+```
+b) How does family size contribute to students' academic performance?
+```{r}
+#As shown above, there are more students with a family size greater than 3 compared to students with a family size less than 3.
+table(f$famsize)
+ggplot(f, aes(x=famsize))+
+    geom_bar(fill='salmon',color='black')
+```
+```{r}
+ggplot(data=f,aes(x=famsize, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex)
+ggplot(data=f,aes(x=famsize, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex) -> g1
+```
+According to many articles, The family size in one way or the other contribute to the failure or success of a student in school, in the sense that when the family is large, there will be no adequate concentration on the child by their parents based on the academic performance of the child. However, according to the graphs above, there is a slight increase in the girls performance even tho it is not a noticeable change.
+
+c) Do kids of divorced parents score lower in the exams?
+```{r}
+table(f$Pstatus)
+
+ggplot(data=f,aes(x=Pstatus, y=G1, fill=sex))+geom_boxplot()
+ggplot(data=f,aes(x=Pstatus, y=G1, fill=sex))+geom_boxplot()-> obj1
+obj1+labs(title="G1 with respect to Pstatus", x="G1", fill="sex")
+obj1+labs(title="G1 with respect to Pstatus", x="G1", fill="sex")->obj2
+obj2+theme(panel.background = element_rect(fill="grey"))-> obj3
+obj3+theme(plot.title= element_text(hjust=0.5,face="bold", colour="cadetblue"))
+
+```
+Looking at the boxplot above, we can deduce that the median of the girls G1 is at around 10 and for the boys it is at around 12-13 and it is clear how boys and girls whose parents are T ( Together) score higher than their peers with divorced parents.
+
+d) How do family relations effect the students academic performance?
+```{r}
+ggplot(data=f,aes(x=famrel, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex)
+ggplot(data=f,aes(x=famrel, y=G1, col=sex))+geom_point()+geom_smooth(method="lm",se=F)+facet_grid(~sex) -> g1
+```
+There is no doubt that students who live among happy understanding family members with whom they have good communication and strong relationship have better performance at school, and that what the graph above explains, students achievement increases with strong family relationships.
+
+e) How does workday alcohol consumption affect the students achievement?
+```{r}
+my_graph <- ggplot(f, aes(x = Dalc, y = G1)) +
+    geom_point(aes(color = sex)) +
+    stat_smooth(method = "lm",
+        col = "#C42126",
+        se = FALSE,
+        size = 1)
+my_graph
+```
+With no surprise, Students performance decreases with alcohol cunsumption.Alcohol abuse leads to frequent confusion and an impaired memory. Excessive alcohol consumption causes inability to remember short words and names. And students who abuse alcohol also tend to lose their concentration in class.
+
+- Heatmap
+```{r}
+numeric_features <- Filter(is.numeric, f)
+
+library(pheatmap)
+pheatmap(cor(numeric_features))
+```
+In this heatmap, we can examine and analyse the relationship between our features and how our variables are correlated with each other.
+
+As shown in the scale, our correlation varies between 1 (positive correlation) and -1 ( negative correlation). The red the color is the high correlated our features are, Example of:
+
+Positive correlation: G1 and G3
+
+Negative correlation: failures and study time show negative correlation
+
+ - Scatterplot G1 and G3
+```{r}
+my_graph +
+    theme_dark() +
+    labs(
+        x = "Dalc",
+        y = "goout",
+        color = "G3",
+        title = "G3 with respect to goout and Dalc",
+        subtitle = " goout and Dalc",
+        caption = "Dalc and goout"
+        
+    )
+```
+From the scatter plot above, we can see the G3 ( final grade) decreases with going out and Daily alcohol consumption.
+
+
+Splitting of data into training set and test set
+```{r}
+library(caTools)
+set.seed(60)
+split<-sample.split(f$G3,SplitRatio=0.8)
+train_set<-subset(f,split ==TRUE)
+test_set<-subset(f,split ==FALSE)
+```
+
+MODEL 1 - MULTIPLE LINEAR REGRESSION
+Firstly with all features 
+```{r}
+l<-lm(G3~.,train_set)
+s<-summary(l)
+print(s)
+```
+Prediction
+```{r}
+pred<-predict(l,test_set)
+print(pred)
+```
+
+Consider the most significant features and perform regression again
+```{r}
+l1<-lm(G3~studytime+failures+schoolsup+famsup+goout+absences,train_set)
+s1<-summary(l1)
+s1
+```
+
+```{r}
+pred1<-predict(l1,test_set)
+library(forecast)
+
+acc<-accuracy(pred1,test_set$G3)
+print(acc)
+```
+Working Efficiency of the model is 80
+```{r}
+result.data <- data.frame(prediction = pred1,
+                          actual = test_set$G3)
+percent.diff <- abs(result.data$prediction - result.data$actual) / result.data$actual * 100
+result.data$percent.diff <- percent.diff
+remove(percent.diff)
+paste("Percent difference:", round(mean(result.data$percent.diff)))
+```
+```{r}
+plot(l1)
+```
+
+
+MODEL 2 - SUPPORT VECTOR MACHINE
+```{r}
+library(e1071)
+l2<-svm(G3~studytime+failures+schoolsup+famsup+health+absences+goout,train_set,type='nu-regression')
+s2<-summary(l2)
+s2
+```
+```{r}
+pred2<-predict(l2,test_set)
+acc<-accuracy(pred2,test_set$G3)
+print(acc)
+```
+Working Efficiency is 78%
+```{r}
+result.data <- data.frame(prediction = pred2,
+                          actual = test_set$G3)
+percent.diff <- abs(result.data$prediction - result.data$actual) / result.data$actual * 100
+result.data$percent.diff <- percent.diff
+remove(percent.diff)
+paste("Percent difference:", round(mean(result.data$percent.diff)))
+```
+```{r}
+x=1:length(test_set$G3)
+plot(x, test_set$G3, pch=18, col="red")
+lines(x, pred2, lwd="1", col="blue")
+```
+
+MODEL 3 - DECISION TREE 
+```{r}
+library(rpart)
+l3<-rpart(G3~studytime+failures+schoolsup+famsup+health+absences+goout,train_set)
+```
+
+```{r}
+pred3<-predict(l3,test_set)
+acc<-accuracy(pred3,test_set$G3)
+print(acc)
+```
+```{r}
+#Plots a fancy RPart decision tree using the pretty rpart plotter.
+fancyRpartPlot(l3, caption = "Classification Tree",cex=0.5)
+```
+Working Efficiency is 79%
+```{r}
+result.data <- data.frame(prediction = pred3,
+                          actual = test_set$G3)
+percent.diff <- abs(result.data$prediction - result.data$actual) / result.data$actual * 100
+result.data$percent.diff <- percent.diff
+remove(percent.diff)
+paste("Percent difference:", round(mean(result.data$percent.diff)))
+```
+MODEL 4 - RANDOM FOREST
+```{r}
+library(randomForest)
+l4<-randomForest(G3~studytime+failures+schoolsup+famsup+health+absences+goout,train_set)
+summary(l4)
+```
+```{r}
+pred4<-predict(l4,test_set)
+acc<-accuracy(pred4,test_set$G3)
+print(acc)
+```
+Working Efficiency is 78%
+```{r}
+result.data <- data.frame(prediction = pred4,
+                          actual = test_set$G3)
+percent.diff <- abs(result.data$prediction - result.data$actual) / result.data$actual * 100
+result.data$percent.diff <- percent.diff
+remove(percent.diff)
+paste("Percent difference:", round(mean(result.data$percent.diff)))
+```
+
+CONCLUSION - We have conducted our analysis based on 4 different algorithms SVM , Multiple Linear Regression , Decision Tree and Random Forest and the Multiple regression giving an accuracy of 80 % and the Perfomance metrics chosen for this RMSE value to know which good is better
